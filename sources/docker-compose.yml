@@ -1,0 +1,57 @@
+version: '3'
+
+volumes:
+  mysql-data:
+  redis-data:
+
+services:
+  web-backend:
+    build:
+      context: ./config/backend
+      dockerfile: Dockerfile
+    container_name: web-backend
+    ports:
+      - "8080:80"
+    volumes:
+      - ./11-training-php:/var/www/html
+      - ./config/backend/php.ini:/usr/local/etc/php/php.ini
+    working_dir: /var/www/html
+    environment:
+      APP_ENV: local
+    depends_on:
+      - web-mysql
+      - web-redis
+    restart: always
+
+
+  web-mysql:
+    container_name: web-mysql
+    image: mysql:5.7.43
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: app_web1
+      MYSQL_USER: user
+      MYSQL_PASSWORD: pass
+
+  web-phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: web-mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root
+
+  web-redis:
+    container_name: web-redis
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: always
